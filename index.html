@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Interactivo de Becarios</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+    <header class="app-header">
+        <h1>Red Internacional de Becarios</h1>
+        <p class="app-subtitle">Haz clic en un país para descubrir su comunidad de becarios</p>
+        <!--
+            SOLO DESARROLLO: simula el estado de sesión del área privada.
+            En la Fase 3 (WordPress) este dato lo inyectará PHP según el
+            usuario real (is_user_logged_in + rol), y este botón desaparece.
+        -->
+        <button id="toggle-login" class="toggle-login" type="button" aria-pressed="false">🔒 Vista pública</button>
+    </header>
+
+    <main class="app-main">
+        <!--
+            El SVG del mapa se inyecta aquí de forma INLINE mediante fetch (js/main.js).
+            Inyectarlo inline (y no con <img>) es lo que permite que CSS y JS accedan
+            a cada <path> individual de los países.
+            NOTA: en la fase WordPress, será PHP quien lo inyecte inline con
+            file_get_contents(), eliminando la petición fetch.
+        -->
+        <div id="map-container" class="map-container">
+            <p class="map-loading">Cargando mapa…</p>
+
+            <!-- Aparece solo cuando hay zoom aplicado; devuelve la vista completa -->
+            <button id="map-reset" class="map-reset" type="button" hidden>⟲ Vista completa</button>
+
+            <!-- Panel lateral: se rellena por JS al hacer clic en un país -->
+            <aside id="side-panel" class="side-panel" aria-label="Detalle del país" hidden>
+                <button id="panel-close" class="panel-close" type="button" aria-label="Cerrar panel">✕</button>
+                <h2 id="panel-title" class="panel-title">—</h2>
+                <p id="panel-count" class="panel-count">—</p>
+
+                <!-- Vista PRIVADA (con sesión): listado detallado + filtro instantáneo -->
+                <div id="panel-private" hidden>
+                    <input id="panel-search" class="panel-search" type="search"
+                           placeholder="Filtrar por nombre, área, ciudad…" autocomplete="off">
+                    <ul id="panel-list" class="panel-list"></ul>
+                </div>
+
+                <!-- Vista PÚBLICA (sin sesión): solo el total + captación -->
+                <div id="panel-public" hidden>
+                    <p class="panel-hint">Inicia sesión en el área privada para ver el listado detallado.</p>
+                    <!-- En WordPress apuntará a la página real del formulario -->
+                    <a id="panel-register" class="panel-register" href="#registro">Quiero ser becario</a>
+                </div>
+            </aside>
+        </div>
+
+        <!--
+            "Gota" marcadora: tooltip animado que sigue al cursor mostrando el
+            número de becarios del país sobrevolado. Oculta por defecto
+            (opacity 0); js/main.js le añade la clase .activo para mostrarla.
+        -->
+        <div id="map-drop" class="map-drop" aria-hidden="true">
+            <span id="map-drop-num" class="map-drop-num"></span>
+        </div>
+    </main>
+
+    <!--
+        Modal de acceso: salta en la VISTA PÚBLICA al pulsar un país con
+        becarios. Oculto por defecto (hidden); lo muestra js/main.js.
+    -->
+    <div id="access-modal" class="modal-overlay" role="dialog" aria-modal="true"
+         aria-labelledby="modal-title" hidden>
+        <div class="modal-box">
+            <button id="modal-close" class="modal-close" type="button" aria-label="Cerrar ventana">✕</button>
+
+            <div class="modal-icon" aria-hidden="true">🔐</div>
+            <h2 id="modal-title" class="modal-title">Acceso exclusivo</h2>
+
+            <!-- El total de becarios del país pulsado (dato público) -->
+            <p id="modal-count" class="modal-count"></p>
+
+            <p class="modal-text">
+                Para ver los asociados residentes en este país necesitas iniciar
+                sesión o registrarte en la plataforma de la Fundación.
+            </p>
+
+            <!-- En WordPress redirigirá a wp_login_url() / página de registro -->
+            <button id="modal-login" class="modal-login" type="button">Iniciar sesión / Registrarse</button>
+        </div>
+    </div>
+
+    <!--
+        Mapa: "Simple World Map" de Al MacDonald / Fritz Lekschas (CC BY-SA 3.0).
+        Cada país es un <path id="xx"> o <g id="xx"> con su código ISO 3166-1 alpha-2.
+    -->
+    <script src="js/main.js"></script>
+</body>
+</html>

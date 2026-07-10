@@ -1,0 +1,542 @@
+/* ==========================================================================
+   Mapa Interactivo de Becarios — Estilos base (Fase 1: Frontend aislado)
+   Toda la paleta está centralizada en variables CSS para poder adaptarla
+   a la identidad corporativa del cliente (y al theme de WordPress) sin
+   tocar el resto de la hoja.
+   ========================================================================== */
+
+:root {
+    --color-fondo: #f4f7fa;
+    --color-texto: #1f2a37;
+    --color-texto-suave: #5b6b7c;
+
+    /* Mapa */
+    --color-pais: #c9d4de;            /* País en reposo */
+    --color-pais-hover: #2f80c3;      /* País bajo el cursor */
+    --color-pais-borde: #ffffff;      /* Fronteras */
+
+    --color-pais-con-becarios: #7fb3d9; /* azul suave: país con becarios */
+    --color-pais-seleccionado: #1b5e96; /* azul oscuro: hover fuerte, selección, acentos */
+
+    --sombra-panel: 0 10px 30px rgba(15, 35, 60, 0.15);
+    --radio: 10px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    background-color: var(--color-fondo);
+    color: var(--color-texto);
+    min-height: 100vh;
+}
+
+/* --------------------------------------------------------------------------
+   Cabecera
+   -------------------------------------------------------------------------- */
+
+.app-header {
+    text-align: center;
+    padding: 2rem 1rem 1rem;
+}
+
+.app-header h1 {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 700;
+}
+
+.app-subtitle {
+    margin-top: 0.4rem;
+    color: var(--color-texto-suave);
+    font-size: 0.95rem;
+}
+
+/* --------------------------------------------------------------------------
+   Contenedor del mapa
+   -------------------------------------------------------------------------- */
+
+.app-main {
+    max-width: 1150px;
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+.map-container {
+    position: relative;      /* ancla el botón de reset */
+    background: #ffffff;
+    border-radius: var(--radio);
+    box-shadow: var(--sombra-panel);
+    padding: 1rem;
+    user-select: none;       /* que el arrastre no seleccione texto */
+}
+
+.map-loading,
+.map-error {
+    text-align: center;
+    padding: 4rem 1rem;
+    color: var(--color-texto-suave);
+}
+
+.map-error {
+    color: #b3372f;
+}
+
+/* El SVG se inyecta inline: lo hacemos fluido (manda el viewBox) */
+.map-container svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    cursor: grab;            /* el fondo/océano invita a arrastrar */
+    touch-action: none;      /* el navegador no roba el gesto (pan táctil) */
+}
+
+/* Mientras se arrastra, el cursor lo indica en todo el mapa */
+.map-container svg.is-panning,
+.map-container svg.is-panning path {
+    cursor: grabbing;
+}
+
+/* --------------------------------------------------------------------------
+   Países
+   Los países simples son <path id="xx">; los que tienen islas o varios
+   territorios son <g id="xx"> con varios <path> hijos. Por eso cada regla
+   se declara en las dos variantes: sobre el path directo y sobre los
+   paths descendientes del grupo.
+   -------------------------------------------------------------------------- */
+
+.map-container svg path,
+.map-container svg circle {
+    fill: var(--color-pais);
+    stroke: var(--color-pais-borde);
+    stroke-width: 0.5;
+    vector-effect: non-scaling-stroke; /* fronteras finas a cualquier nivel de zoom */
+    cursor: pointer;
+    transition: fill 0.3s ease-out;    /* transición suave del color */
+}
+
+/* Microestados (<circle id="ad">…): borde más marcado para que el punto
+   destaque tanto sobre el océano como superpuesto a otro país */
+.map-container svg circle {
+    stroke: #8fa3b8;
+    stroke-width: 1;
+}
+
+/* Países CON becarios (clase aplicada por JS al indexar el JSON):
+   azul suave en reposo… */
+.map-container svg path.has-fellows,
+.map-container svg circle.has-fellows,
+.map-container svg .has-fellows path {
+    fill: var(--color-pais-con-becarios);
+}
+
+/* …y azul mucho más oscuro al pasar el ratón (hover CSS nativo: funciona
+   igual en <path>, en <circle> y en los grupos <g> con islas) */
+.map-container svg path.has-fellows:hover,
+.map-container svg circle.has-fellows:hover,
+.map-container svg .has-fellows:hover path {
+    fill: var(--color-pais-seleccionado);
+}
+
+/* Los países SIN becarios apenas se atenúan (siguen siendo clicables).
+   El :not(.has-fellows) evita pisar por especificidad al hover azul de
+   los países-grupo con becarios */
+.map-container svg path[id]:not(.has-fellows):hover,
+.map-container svg circle[id]:not(.has-fellows):hover,
+.map-container svg g[id]:not(.has-fellows):hover path {
+    fill: #b5c3d2;
+}
+
+/* País seleccionado (panel o modal abiertos). Mismo azul oscuro que el
+   hover fuerte, para continuidad visual al hacer clic */
+.map-container svg path.country-selected,
+.map-container svg circle.country-selected,
+.map-container svg .country-selected path {
+    fill: var(--color-pais-seleccionado);
+}
+
+/* --------------------------------------------------------------------------
+   Botón "vista completa" (solo visible con zoom aplicado)
+   -------------------------------------------------------------------------- */
+
+.map-reset {
+    position: absolute;
+    left: 1.25rem;           /* a la izquierda: la derecha es del panel lateral */
+    bottom: 1.25rem;
+    z-index: 10;
+    padding: 0.45rem 0.9rem;
+    border: none;
+    border-radius: 999px;
+    background: var(--color-texto);
+    color: #ffffff;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    transition: background 0.15s ease-out;
+}
+
+.map-reset:hover {
+    background: var(--color-pais-seleccionado);
+}
+
+/* --------------------------------------------------------------------------
+   "Gota" marcadora (tooltip animado con el nº de becarios)
+   Anatomía: círculo con el número + cola triangular (::after) apuntando
+   abajo. El punto de anclaje (left/top que fija el JS) es la PUNTA de la
+   cola gracias al translate(-50%, -100%): sin números mágicos en el JS.
+   -------------------------------------------------------------------------- */
+
+.map-drop {
+    position: fixed;          /* coordenadas de viewport: sin cálculos de scroll */
+    left: 0;
+    top: 0;
+    z-index: 1000;
+    width: 48px;
+    height: 62px;             /* 48 de círculo + 14 de cola */
+    pointer-events: none;     /* nunca roba el ratón al mapa */
+    opacity: 0;               /* oculta por defecto */
+    transform: translate(-50%, calc(-100% + 8px)); /* posición de partida, más baja */
+    transition: opacity 0.22s ease-out, transform 0.22s ease-out;
+    /* left/top NO se transicionan: el seguimiento del cursor debe ser inmediato */
+}
+
+/* Estado visible: sube deslizándose hasta flotar 10px por encima del cursor */
+.map-drop.activo {
+    opacity: 1;
+    transform: translate(-50%, calc(-100% - 10px));
+}
+
+.map-drop-num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: var(--color-pais-seleccionado);
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+    color: #ffffff;
+    font-size: 1.15rem;
+    font-weight: 800;
+    box-shadow: 0 6px 16px rgba(10, 25, 45, 0.35);
+}
+
+/* La cola de la gota: triángulo CSS bajo el círculo */
+.map-drop::after {
+    content: '';
+    position: absolute;
+    top: 46px;                /* solapa 2px con el círculo para que no haya hueco */
+    left: 50%;
+    transform: translateX(-50%);
+    border: 9px solid transparent;
+    border-top: 16px solid var(--color-pais-seleccionado);
+    border-bottom: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Botón de simulación de sesión (SOLO DESARROLLO — en WordPress desaparece)
+   -------------------------------------------------------------------------- */
+
+.toggle-login {
+    margin-top: 0.9rem;
+    padding: 0.45rem 1rem;
+    border: 1px solid var(--color-texto-suave);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-texto);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease-out, color 0.15s ease-out;
+}
+
+.toggle-login.is-private {
+    background: var(--color-pais-seleccionado);
+    border-color: var(--color-pais-seleccionado);
+    color: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+   Panel lateral (vista pública: contador / vista privada: listado)
+   -------------------------------------------------------------------------- */
+
+.side-panel {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 20;
+    width: min(320px, calc(100% - 2rem));
+    padding: 1.25rem 1.25rem 1rem;
+    background: #ffffff;
+    border-radius: var(--radio);
+    box-shadow: var(--sombra-panel);
+    overflow-y: auto;
+    user-select: text;       /* dentro del panel sí se puede copiar texto */
+    animation: panel-entra 0.22s ease-out;
+}
+
+@keyframes panel-entra {
+    from { opacity: 0; transform: translateX(24px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+.panel-close {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-texto-suave);
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+.panel-close:hover {
+    background: var(--color-fondo);
+    color: var(--color-texto);
+}
+
+.panel-title {
+    font-size: 1.25rem;
+    padding-right: 2rem;     /* hueco para la ✕ */
+}
+
+.panel-count {
+    margin-top: 0.2rem;
+    padding-bottom: 0.9rem;
+    color: var(--color-pais-seleccionado);
+    font-weight: 700;
+    border-bottom: 1px solid var(--color-fondo);
+}
+
+.panel-hint {
+    margin-top: 0.9rem;
+    font-size: 0.9rem;
+    color: var(--color-texto-suave);
+}
+
+/* Botón de captación (vista pública) */
+.panel-register {
+    display: block;
+    margin-top: 1rem;
+    padding: 0.65rem 1rem;
+    border-radius: 8px;
+    background: var(--color-pais-hover);
+    color: #ffffff;
+    text-align: center;
+    text-decoration: none;
+    font-weight: 700;
+    transition: background 0.15s ease-out;
+}
+
+.panel-register:hover {
+    background: var(--color-pais-seleccionado);
+}
+
+/* Buscador y listado (vista privada) */
+.panel-search {
+    width: 100%;
+    margin-top: 0.9rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d4dde5;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 0.9rem;
+}
+
+.panel-search:focus {
+    outline: 2px solid var(--color-pais-hover);
+    outline-offset: -1px;
+    border-color: transparent;
+}
+
+.panel-list {
+    list-style: none;
+    margin-top: 0.6rem;
+}
+
+.panel-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 0.2rem;
+    border-bottom: 1px solid var(--color-fondo);
+}
+
+.panel-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;            /* permite recortar textos largos sin desbordar */
+}
+
+/* Avatar: foto real o círculo de iniciales, mismas dimensiones siempre */
+.panel-avatar {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;       /* la foto llena el círculo sin deformarse */
+    background: var(--color-fondo);
+}
+
+.panel-avatar-iniciales {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+}
+
+.panel-item strong {
+    font-size: 0.95rem;
+}
+
+.panel-item-detalle {
+    font-size: 0.85rem;
+    color: var(--color-texto-suave);
+}
+
+.panel-item-promo {
+    align-self: flex-start;
+    margin-top: 0.2rem;
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
+    background: var(--color-fondo);
+    color: var(--color-texto-suave);
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+.panel-empty {
+    padding: 1rem 0.2rem;
+    color: var(--color-texto-suave);
+    font-size: 0.9rem;
+}
+
+/* --------------------------------------------------------------------------
+   Modal de acceso (vista pública, país con becarios)
+   -------------------------------------------------------------------------- */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;                         /* ocupa toda la pantalla */
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(10, 25, 45, 0.55);
+    backdrop-filter: blur(3px);
+    animation: modal-fondo 0.2s ease-out;
+}
+
+/* Nuestro display:flex le ganaría al [hidden] nativo del navegador:
+   hay que reafirmar la ocultación explícitamente */
+.modal-overlay[hidden] {
+    display: none;
+}
+
+.modal-box {
+    position: relative;
+    width: min(420px, 100%);
+    padding: 2.25rem 2rem 2rem;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(10, 25, 45, 0.35);
+    text-align: center;
+    animation: modal-entra 0.25s ease-out;
+}
+
+@keyframes modal-fondo {
+    from { opacity: 0; }
+}
+
+@keyframes modal-entra {
+    from { opacity: 0; transform: translateY(14px) scale(0.97); }
+}
+
+.modal-close {
+    position: absolute;
+    top: 0.7rem;
+    right: 0.7rem;
+    width: 2.1rem;
+    height: 2.1rem;
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--color-texto-suave);
+    font-size: 1.05rem;
+    cursor: pointer;
+}
+
+.modal-close:hover {
+    background: var(--color-fondo);
+    color: var(--color-texto);
+}
+
+.modal-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.4rem;
+    height: 3.4rem;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    border-radius: 50%;
+    background: #e5f0fa;
+}
+
+.modal-title {
+    font-size: 1.35rem;
+}
+
+.modal-count {
+    margin-top: 0.5rem;
+    font-weight: 700;
+    color: var(--color-pais-seleccionado);
+}
+
+.modal-text {
+    margin-top: 0.6rem;
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: var(--color-texto-suave);
+}
+
+/* Botón principal: el color corporativo, con sombra para que "flote" */
+.modal-login {
+    width: 100%;
+    margin-top: 1.4rem;
+    padding: 0.8rem 1rem;
+    border: none;
+    border-radius: 9px;
+    background: var(--color-pais-hover);
+    color: #ffffff;
+    font: inherit;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(47, 128, 195, 0.35);
+    transition: background 0.15s ease-out, transform 0.1s ease-out;
+}
+
+.modal-login:hover {
+    background: var(--color-pais-seleccionado);
+}
+
+.modal-login:active {
+    transform: scale(0.98);
+}

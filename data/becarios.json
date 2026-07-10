@@ -1,0 +1,18 @@
+{
+    "_comentario": "Datos SIMULADOS para la fase de maquetación. 'pais' usa el código ISO 3166-1 alpha-2 en minúsculas, idéntico al id de cada país del SVG. 'foto' es OPCIONAL: si falta (o la imagen falla), la interfaz muestra un avatar con las iniciales. En la fase WordPress este JSON lo generará PHP desde el CPT 'becario' y 'foto' será la URL de la imagen destacada.",
+    "becarios": [
+        { "id": 1,  "nombre": "Lucía",    "apellidos": "Fernández Ruiz",   "pais": "es", "ciudad": "Madrid",       "area": "Biotecnología",          "promocion": 2023, "foto": "assets/avatars/avatar-1.svg" },
+        { "id": 2,  "nombre": "Carlos",   "apellidos": "Ortega Vidal",     "pais": "es", "ciudad": "Barcelona",    "area": "Ingeniería Civil",       "promocion": 2022 },
+        { "id": 3,  "nombre": "Marina",   "apellidos": "López Cano",       "pais": "es", "ciudad": "Sevilla",      "area": "Derecho Internacional",  "promocion": 2024, "foto": "assets/avatars/avatar-2.svg" },
+        { "id": 4,  "nombre": "Diego",    "apellidos": "Ramírez Soto",     "pais": "mx", "ciudad": "CDMX",         "area": "Economía",               "promocion": 2023, "foto": "assets/avatars/avatar-3.svg" },
+        { "id": 5,  "nombre": "Valentina","apellidos": "Herrera Gil",      "pais": "mx", "ciudad": "Guadalajara",  "area": "Medicina",               "promocion": 2021 },
+        { "id": 6,  "nombre": "Julieta",  "apellidos": "Acosta Pereyra",   "pais": "ar", "ciudad": "Buenos Aires", "area": "Física",                 "promocion": 2022 },
+        { "id": 7,  "nombre": "Ethan",    "apellidos": "Miller",           "pais": "us", "ciudad": "Boston",       "area": "Inteligencia Artificial","promocion": 2024, "foto": "assets/avatars/avatar-4.svg" },
+        { "id": 8,  "nombre": "Sarah",    "apellidos": "Coleman",          "pais": "us", "ciudad": "San Francisco","area": "Bioinformática",         "promocion": 2023 },
+        { "id": 9,  "nombre": "Camille",  "apellidos": "Roux",             "pais": "fr", "ciudad": "París",        "area": "Historia del Arte",      "promocion": 2022, "foto": "assets/avatars/avatar-5.svg" },
+        { "id": 10, "nombre": "Jonas",    "apellidos": "Weber",            "pais": "de", "ciudad": "Berlín",       "area": "Energías Renovables",    "promocion": 2024 },
+        { "id": 11, "nombre": "Yasmine",  "apellidos": "El Amrani",        "pais": "ma", "ciudad": "Rabat",        "area": "Arquitectura",           "promocion": 2023 },
+        { "id": 12, "nombre": "Haruki",   "apellidos": "Tanaka",           "pais": "jp", "ciudad": "Tokio",        "area": "Robótica",               "promocion": 2021 },
+        { "id": 13, "nombre": "Pau",      "apellidos": "Vidal Montaner",   "pais": "ad", "ciudad": "Andorra la Vella", "area": "Finanzas",           "promocion": 2024, "foto": "assets/avatars/avatar-1.svg" }
+    ]
+}
